@@ -2,6 +2,11 @@
 
 Acervo de vídeos no terminal.
 
+## Demo
+
+<img width="1919" height="1079" alt="Demo" src="https://github.com/user-attachments/assets/db0e9c06-28dd-4de8-937f-507a5f1ce825" />
+
+
 ## Instalação
 
 **Go (recomendado):**
