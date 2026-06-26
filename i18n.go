@@ -18,9 +18,10 @@ var langs = map[string]map[string]string{
 		"hint_add": "Pressione  n  para adicionar um diretório.",
 
 		// Footers
-		"footer_main":  "enter: selecionar  |  n: novo diretório  |  d: remover  |  l: idioma  |  q: sair",
-		"footer_files": "enter: abrir  |  v: marcar visto  |  r: remover visto  |  esc: voltar  |  q: sair",
-		"footer_input": "enter: confirmar  |  esc: cancelar",
+		"footer_main":   "enter: selecionar  |  n: novo diretório  |  d: remover  |  l: idioma  |  q: sair",
+		"footer_files":  "enter: abrir  |  v: marcar visto  |  r: remover visto  |  a: renomear  |  esc: voltar  |  q: sair",
+		"footer_input":  "enter: confirmar  |  esc: cancelar",
+		"footer_rename": "enter: confirmar  |  esc: cancelar",
 
 		// Diretórios
 		"dir_added":   "Diretório adicionado",
@@ -37,6 +38,10 @@ var langs = map[string]map[string]string{
 		"watched_label":    "Visto",
 		"marked_watched":   "Marcado como visto",
 		"unmarked_watched": "Removido de visto",
+
+		// Renomeação
+		"rename_label": "Renomear",
+		"renamed":      "Renomeado",
 
 		// Atualização
 		"update_available": "Nova versão disponível",
@@ -57,9 +62,10 @@ var langs = map[string]map[string]string{
 		"hint_add": "Presiona  n  para agregar un directorio.",
 
 		// Footers
-		"footer_main":  "enter: seleccionar  |  n: nuevo directorio  |  d: eliminar  |  l: idioma  |  q: salir",
-		"footer_files": "enter: abrir  |  v: marcar visto  |  r: desmarcar visto  |  esc: volver  |  q: salir",
-		"footer_input": "enter: confirmar  |  esc: cancelar",
+		"footer_main":   "enter: seleccionar  |  n: nuevo directorio  |  d: eliminar  |  l: idioma  |  q: salir",
+		"footer_files":  "enter: abrir  |  v: marcar visto  |  r: desmarcar visto  |  a: renombrar  |  esc: volver  |  q: salir",
+		"footer_input":  "enter: confirmar  |  esc: cancelar",
+		"footer_rename": "enter: confirmar  |  esc: cancelar",
 
 		// Directorios
 		"dir_added":   "Directorio agregado",
@@ -76,6 +82,10 @@ var langs = map[string]map[string]string{
 		"watched_label":    "Visto",
 		"marked_watched":   "Marcado como visto",
 		"unmarked_watched": "Desmarcado de visto",
+
+		// Renombrado
+		"rename_label": "Renombrar",
+		"renamed":      "Renombrado",
 
 		// Actualización
 		"update_available": "Nueva versión disponible",
