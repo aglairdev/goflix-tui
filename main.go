@@ -23,7 +23,7 @@ import (
 
 const (
 	AppName = "goflix"
-	Version = "v1.0.0"
+	Version = "v1.1.0"
 	RepoAPI = "https://api.github.com/repos/aglairdev/goflix/releases/latest"
 
 	// Altere para qualquer cor hex válida hexadecimal
@@ -31,16 +31,15 @@ const (
 )
 
 // Extensões de vídeo suportadas
-
 var videoExts = map[string]bool{
 	".mp4": true, ".mkv": true, ".avi": true, ".mov": true,
 	".wmv": true, ".flv": true, ".webm": true, ".m4v": true,
 	".ts": true, ".mpeg": true, ".mpg": true, ".3gp": true,
 }
 
-// Estilos
-// Todos os elementos que usam ColorAccent mudam ao alterar a constante acima
+var debugMode bool
 
+// Estilos
 var (
 	styleTitle      = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(ColorAccent))
 	styleVersion    = lipgloss.NewStyle().Foreground(lipgloss.Color("#AAAAAA"))
@@ -269,6 +268,19 @@ func loadVideos(dir string, watched map[string]int64) []videoFile {
 	return files
 }
 
+// hasDirItems retorna true se a lista contém apenas dirItem (sem vídeos)
+func hasDirItems(items []list.Item) bool {
+	for _, item := range items {
+		if _, ok := item.(dirItem); ok {
+			return true
+		}
+		if _, ok := item.(videoItem); ok {
+			return false
+		}
+	}
+	return false
+}
+
 // Itens da lista
 
 // dirItem representa diretórios raiz e subdiretórios
@@ -356,6 +368,9 @@ var footerKey = map[screen]string{
 	screenRename: "footer_rename",
 }
 
+// footerKey para tela de arquivos com apenas diretórios (sem v/r)
+var footerKeyDirs = "footer_files_dirs"
+
 // Model
 
 type model struct {
@@ -400,7 +415,6 @@ func (m *model) reloadDirs() {
 	for i, d := range m.dirs {
 		items[i] = dirItem{path: d}
 	}
-	// Inicialização: dimensões ainda desconhecidas
 	if m.width == 0 || m.height == 0 {
 		l := newList(0, 10)
 		l.SetItems(items)
@@ -408,7 +422,6 @@ func (m *model) reloadDirs() {
 		m.fileList = newList(0, 10)
 		return
 	}
-	// Atualiza apenas os itens, preservando tamanho e posição do cursor
 	m.mainList.SetItems(items)
 }
 
@@ -417,12 +430,11 @@ func (m *model) loadDir(dir string) {
 	m.watched = loadWatched()
 	videos := loadVideos(dir, m.watched)
 
-	h := m.height - 5 // reserva: header(2) + footer(1) + flash(1) + margem(1)
+	h := m.height - 5
 	if h < 1 {
 		h = 10
 	}
 
-	// Sem vídeos diretos → mostra subpastas
 	if len(videos) == 0 {
 		entries, _ := os.ReadDir(dir)
 		var sub []list.Item
@@ -439,7 +451,6 @@ func (m *model) loadDir(dir string) {
 		}
 	}
 
-	// Separa em: em progresso / normais / assistidos
 	var inProgress, normal, watched []videoFile
 	for _, v := range videos {
 		switch {
@@ -454,7 +465,6 @@ func (m *model) loadDir(dir string) {
 	sort.Slice(inProgress, func(i, j int) bool { return inProgress[i].resume > inProgress[j].resume })
 	sort.Slice(watched, func(i, j int) bool { return watched[i].watchedAt > watched[j].watchedAt })
 
-	// Monta lista com separadores visuais entre seções
 	var items []list.Item
 	sep := videoItem{section: "sep"}
 	for _, v := range inProgress {
@@ -515,12 +525,7 @@ func doUpdate() tea.Cmd {
 	}
 }
 
-// Init
-
-// Init dispara a verificação de atualização ao iniciar, sem bloquear
 func (m model) Init() tea.Cmd { return checkUpdate }
-
-// Update
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.flash = ""
@@ -548,6 +553,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case loadDirMsg:
 		m.loadDir(msg.dir)
+		m.pendingDir = ""
 		m.screen = screenFiles
 		return m, nil
 
@@ -615,8 +621,9 @@ func (m model) updateMain(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case "enter":
 		if item, ok := m.mainList.SelectedItem().(dirItem); ok {
-			m.screen = screenLoading
 			m.pendingDir = item.path
+			m.curDir = ""
+			m.screen = screenLoading
 			return m, func() tea.Msg { return loadDirMsg{dir: item.path} }
 		}
 	}
@@ -626,6 +633,9 @@ func (m model) updateMain(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) updateFiles(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// v e r só funcionam quando há vídeos na lista (não em listagem de diretórios)
+	isVideoList := !hasDirItems(m.fileList.Items())
+
 	switch msg.String() {
 	case "q":
 		m.quitting = true
@@ -641,6 +651,9 @@ func (m model) updateFiles(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.loadDir(filepath.Dir(m.curDir))
 		return m, nil
 	case "v":
+		if !isVideoList {
+			return m, nil
+		}
 		if vi, ok := m.fileList.SelectedItem().(videoItem); ok && vi.section != "sep" {
 			setWatched(vi.file.path, true)
 			m.watched[vi.file.path] = time.Now().Unix()
@@ -649,6 +662,9 @@ func (m model) updateFiles(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case "r":
+		if !isVideoList {
+			return m, nil
+		}
 		if vi, ok := m.fileList.SelectedItem().(videoItem); ok && vi.section != "sep" {
 			setWatched(vi.file.path, false)
 			resetResumePosition(vi.file.path)
@@ -674,8 +690,9 @@ func (m model) updateFiles(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case "enter":
 		if di, ok := m.fileList.SelectedItem().(dirItem); ok {
-			m.screen = screenLoading
 			m.pendingDir = di.path
+			m.curDir = ""
+			m.screen = screenLoading
 			return m, func() tea.Msg { return loadDirMsg{dir: di.path} }
 		}
 		if vi, ok := m.fileList.SelectedItem().(videoItem); ok && vi.section != "sep" {
@@ -751,47 +768,46 @@ func (m model) playFile(path string) tea.Cmd {
 	})
 }
 
-// View
-
 func (m model) View() string {
 	if m.quitting {
 		return "  " + styleVersion.Render(AppName+" ꕤ - "+t("bye")) + "\n"
 	}
 
-	// Header
 	header := "  " + styleTitle.Render(AppName+" ꕤ") + "  " + styleVersion.Render(Version)
-	if m.screen == screenFiles && m.curDir != "" {
+	if m.screen == screenFiles && m.curDir != "" && m.pendingDir == "" {
 		header += "  " + styleDir.Render(filepath.Base(m.curDir)+"/")
 	}
 
-	// Corpo da tela atual
 	var body string
 	switch m.screen {
 	case screenMain:
 		if len(m.dirs) == 0 {
-			body = "  " + styleNormal.Render(t("no_dirs")) + "\n"
+			body = "\n  " + styleNormal.Render(t("no_dirs")) + "\n"
 		} else {
-			body = m.mainList.View() + "\n"
+			body = "\n" + m.mainList.View() + "\n"
 		}
-		// Preenche espaço restante para manter footer sempre no rodapé
-		used := strings.Count(body, "\n") + 2 // header + divider
+		used := strings.Count(body, "\n") + 2
 		if rem := m.height - used - 3; rem > 0 {
 			body += strings.Repeat("\n", rem)
 		}
 	case screenFiles:
 		if len(m.fileList.Items()) == 0 {
-			body = "  " + styleMeta.Render(t("no_video")) + "\n"
+			body = "\n  " + styleMeta.Render(t("no_video")) + "\n"
 		} else {
-			body = m.fileList.View() + "\n"
+			body = "\n" + m.fileList.View() + "\n"
+		}
+		used := strings.Count(body, "\n") + 2
+		if rem := m.height - used - 3; rem > 0 {
+			body += strings.Repeat("\n", rem)
 		}
 	case screenInput:
 		body = "  " + styleNormal.Render(t("prompt_dir")) + "\n\n" +
 			"  " + m.input.View() + "\n\n"
 	case screenRename:
-		body = "  " + styleNormal.Render(t("rename_label")+": "+filepath.Base(m.renameTarget)) + "\n\n" +
+		body = "\n  " + styleNormal.Render(t("rename_label")+": "+filepath.Base(m.renameTarget)) + "\n\n" +
 			"  " + m.input.View() + "\n\n"
 	case screenLoading:
-		body = "  " + styleLoading.Render("⟳  "+t("loading")+" "+filepath.Base(m.pendingDir)+"/") + "\n"
+		body = "  " + styleLoading.Render("⟳  "+t("loading")) + "\n"
 	case screenUpdate:
 		body = "\n  " + fmt.Sprintf("ꕤ %s: %s  (%s: %s)\n\n",
 			t("update_available"), styleUpdate.Render(m.latestVer),
@@ -799,13 +815,13 @@ func (m model) View() string {
 			"  " + styleVersion.Render(t("update_prompt")) + "\n"
 	}
 
-	// Footer fixo por tela
 	footer := ""
-	if key, ok := footerKey[m.screen]; ok {
+	if m.screen == screenFiles && hasDirItems(m.fileList.Items()) {
+		footer = renderFooter(t(footerKeyDirs)) + "\n"
+	} else if key, ok := footerKey[m.screen]; ok {
 		footer = renderFooter(t(key)) + "\n"
 	}
 
-	// Linha reservada para flash - evita deslocamento de layout
 	flash := "\n"
 	if m.flash != "" {
 		style, prefix := styleSuccess, "✓  "
@@ -815,11 +831,24 @@ func (m model) View() string {
 		flash = "  " + style.Render(prefix+m.flash) + "\n"
 	}
 
-	return header + "\n" +
+	s := header + "\n" +
 		styleDivider.Render(strings.Repeat("─", m.width)) + "\n" +
 		body + footer +
 		styleDivider.Render(strings.Repeat("─", m.width)) + "\n" +
 		flash + "\n"
+	lines := strings.Count(s, "\n")
+	if rem := m.height - lines; rem > 0 {
+		s += strings.Repeat("\n", rem)
+	}
+	return s
+}
+
+// Debug -d
+
+func debug(format string, args ...interface{}) {
+	if debugMode {
+		fmt.Fprintf(os.Stderr, "[goflix-debug] "+format+"\n", args...)
+	}
 }
 
 // Dependências
@@ -839,6 +868,30 @@ func checkDeps() {
 // Main
 
 func main() {
+	for _, arg := range os.Args[1:] {
+		switch arg {
+		case "-v":
+			fmt.Printf("%s %s\n", AppName, Version)
+			os.Exit(0)
+		case "-d":
+			debugMode = true
+		case "-h":
+			fmt.Fprintf(os.Stderr, "Usage: %s [flags]\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "\nFlags:\n")
+			fmt.Fprintf(os.Stderr, "  -v\tshow version\n")
+			fmt.Fprintf(os.Stderr, "  -d\tdebug mode (verbose stderr)\n")
+			fmt.Fprintf(os.Stderr, "  -h\tshow this help\n")
+			os.Exit(0)
+		default:
+			fmt.Fprintf(os.Stderr, "unknown flag: %s\n\n", arg)
+			fmt.Fprintf(os.Stderr, "Usage: %s [flags]\n", os.Args[0])
+			fmt.Fprintf(os.Stderr, "  -v\tshow version\n")
+			fmt.Fprintf(os.Stderr, "  -d\tdebug mode\n")
+			fmt.Fprintf(os.Stderr, "  -h\tshow this help\n")
+			os.Exit(1)
+		}
+	}
+
 	checkDeps()
 	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {

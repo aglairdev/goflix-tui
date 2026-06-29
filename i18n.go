@@ -19,6 +19,7 @@ var langs = map[string]map[string]string{
 
 		// Footers
 		"footer_main":   "enter: selecionar  |  n: novo diretório  |  d: remover  |  l: idioma  |  q: sair",
+		"footer_files_dirs": "enter: abrir  |  a: renomear  |  esc: voltar  |  q: sair",
 		"footer_files":  "enter: abrir  |  v: marcar visto  |  r: remover visto  |  a: renomear  |  esc: voltar  |  q: sair",
 		"footer_input":  "enter: confirmar  |  esc: cancelar",
 		"footer_rename": "enter: confirmar  |  esc: cancelar",
@@ -63,6 +64,7 @@ var langs = map[string]map[string]string{
 
 		// Footers
 		"footer_main":   "enter: seleccionar  |  n: nuevo directorio  |  d: eliminar  |  l: idioma  |  q: salir",
+		"footer_files_dirs": "enter: abrir  |  a: renombrar  |  esc: volver  |  q: salir",
 		"footer_files":  "enter: abrir  |  v: marcar visto  |  r: desmarcar visto  |  a: renombrar  |  esc: volver  |  q: salir",
 		"footer_input":  "enter: confirmar  |  esc: cancelar",
 		"footer_rename": "enter: confirmar  |  esc: cancelar",
