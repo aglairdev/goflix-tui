@@ -1,6 +1,6 @@
 <div align="center">
 
-[![GOFLIX](https://img.shields.io/badge/GOFLIX-C55A10?style=for-the-badge)](https://github.com/aglairdev/goflix)
+[![GOFLIX](https://img.shields.io/badge/GOFLIX-C55A10?style=for-the-badge)](https://github.com/aglairdev/Goflix)
 
 </div>
 
@@ -24,25 +24,31 @@ Gerenciador de vídeos no terminal.
 ```bash
 go install github.com/aglairdev/goflix@latest
 ```
-Requer: `go` `mpv` `ffprobe` (opcional)
-
 **Versão específica:**
 ```bash
 go install github.com/aglairdev/goflix@v1.0.0
 ```
+Requer: `go` `mpv` 
 
 **Via release** (sem Go instalado):
-Baixe o binário em [Releases](https://github.com/aglairdev/goflix/releases), mova para `~/.local/bin` e dê permissão de execução:
+Baixe o binário em [releases](https://github.com/aglairdev/goflix/releases)
+
+Requer: `mpv` 
+
+mova para `~/.local/bin` e dê permissão de execução:
+
 ```bash
-chmod +x goflix
+cd go/bin/
 mv goflix ~/.local/bin/
 ```
-Requer: `mpv` `ffprobe` (opcional)
-
 Certifique-se de que `~/.local/bin` está no seu PATH. Se não estiver, adicione ao seu `~/.bashrc` ou `~/.zshrc`:
+
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
 ```
+
+> [!NOTE]
+> ffprobe (`ffmpeg`) é necessário apenas se deseja ter a duração dos vídeos no menu.
 
 ## Uso
 
@@ -93,7 +99,7 @@ u: atualizar agora    qualquer tecla: ignorar
 
 Pressione `u` para atualizar automaticamente. Requer Go instalado.
 
-Usuários que instalaram via release receberão o aviso, mas precisarão baixar o novo binário manualmente em [Releases](https://github.com/aglairdev/goflix/releases).
+Usuários que instalaram via release receberão o aviso, mas precisarão baixar o novo binário manualmente em [releases](https://github.com/aglairdev/goflix/releases).
 
 ## Dados
 
@@ -122,6 +128,7 @@ A escolha é persistida e restaurada ao iniciar.
 ### Idioma
 
 O idioma pode ser alternado com `l` diretamente no app, sem reiniciar.
+- pt-br/es
 
 ## Tradução
 
