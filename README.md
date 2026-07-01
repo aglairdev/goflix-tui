@@ -24,10 +24,7 @@ Gerenciador de vídeos no terminal.
 ```bash
 go install github.com/aglairdev/goflix@latest
 ```
-**Versão específica:**
-```bash
-go install github.com/aglairdev/goflix@v1.0.0
-```
+
 Requer: `go` `mpv` 
 
 **Via release** (sem Go instalado):
@@ -61,7 +58,7 @@ goflix
 | Flag | Descrição |
 |------|-----------|
 | `-v` | exibe versão |
-| `-d` | modo debug (verbose no stderr) |
+| `-d` | modo debug (`~/.config/goflix/debug.log`) |
 | `-h` | mostra ajuda |
 
 ### Atalhos
@@ -87,17 +84,21 @@ goflix
 | `a` | renomear arquivo/diretório |
 | `esc` | voltar |
 | `q` | sair |
+
 ## Atualização
 
 O app verifica atualizações ao iniciar. Se houver uma versão nova:
 
 ```
-ꕤ Nova versão disponível: v1.0.1  (atual: v1.0.0)
+ꕤ Nova versão disponível: v1.1.5  (atual: v1.1.4)
 ─────────────────────────────────────────────────
 u: atualizar agora    qualquer tecla: ignorar
 ```
 
 Pressione `u` para atualizar automaticamente. Requer Go instalado.
+
+> [!NOTE]
+> Atualizações automáticas funcionam a partir da versão [1.1.5](https://github.com/aglairdev/Goflix/compare/v1.1.4...v1.1.5)
 
 Usuários que instalaram via release receberão o aviso, mas precisarão baixar o novo binário manualmente em [releases](https://github.com/aglairdev/goflix/releases).
 
@@ -108,6 +109,7 @@ Usuários que instalaram via release receberão o aviso, mas precisarão baixar 
 | `~/.config/goflix/config` | diretórios mapeados |
 | `~/.config/goflix/watched` | histórico de assistidos |
 | `~/.config/goflix/settings` | preferências (tema) |
+| `~/.config/goflix/debug.log` | logs do modo debug |
 
 ## Personalização
 
