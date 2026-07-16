@@ -1,26 +1,30 @@
-package main
+package ui
 
 import (
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	"github.com/aglairdev/goflix/internal/i18n"
+	"github.com/aglairdev/goflix/internal/theme"
+	"github.com/aglairdev/goflix/internal/version"
 )
 
-func (m model) View() string {
+func (m Model) View() string {
 	if m.quitting {
-		return "  " + styleVersion.Render(AppName+" ꕤ - "+t("bye")) + "\n"
+		return "  " + theme.VersionText.Render(version.AppName+" ꕤ - "+i18n.T("bye")) + "\n"
 	}
 
-	header := "  " + styleTitle.Render(AppName+" ꕤ") + "  " + styleVersion.Render(Version)
+	header := "  " + theme.Title.Render(version.AppName+" ꕤ") + "  " + theme.VersionText.Render(version.Version)
 	if m.screen == screenFiles && m.curDir != "" && m.pendingDir == "" {
-		header += "  " + styleDir.Render(filepath.Base(m.curDir)+"/")
+		header += "  " + theme.Dir.Render(filepath.Base(m.curDir)+"/")
 	}
 
 	var body string
 	switch m.screen {
 	case screenMain:
 		if len(m.dirs) == 0 {
-			body = "\n  " + styleNormal.Render(t("no_dirs")) + "\n"
+			body = "\n  " + theme.Normal.Render(i18n.T("no_dirs")) + "\n"
 		} else {
 			body = "\n" + m.mainList.View() + "\n"
 		}
@@ -30,7 +34,7 @@ func (m model) View() string {
 		}
 	case screenFiles:
 		if len(m.fileList.Items()) == 0 {
-			body = "\n  " + styleMeta.Render(t("no_video")) + "\n"
+			body = "\n  " + theme.Meta.Render(i18n.T("no_video")) + "\n"
 		} else {
 			body = "\n" + m.fileList.View() + "\n"
 		}
@@ -39,14 +43,14 @@ func (m model) View() string {
 			body += strings.Repeat("\n", rem)
 		}
 	case screenInput:
-		body = "  " + styleNormal.Render(t("prompt_dir")) + "\n\n" +
+		body = "  " + theme.Normal.Render(i18n.T("prompt_dir")) + "\n\n" +
 			"  " + m.input.View() + "\n\n"
 		used := strings.Count(body, "\n") + 2
 		if rem := m.height - used - 3; rem > 0 {
 			body += strings.Repeat("\n", rem)
 		}
 	case screenRename:
-		body = "\n  " + styleNormal.Render(t("rename_label")+": "+filepath.Base(m.renameTarget)) + "\n\n" +
+		body = "\n  " + theme.Normal.Render(i18n.T("rename_label")+": "+filepath.Base(m.renameTarget)) + "\n\n" +
 			"  " + m.input.View() + "\n\n"
 		used := strings.Count(body, "\n") + 2
 		if rem := m.height - used - 3; rem > 0 {
@@ -54,26 +58,26 @@ func (m model) View() string {
 		}
 
 	case screenLoading:
-		body = "  " + styleLoading.Render("⟳  "+t("loading")) + "\n"
+		body = "  " + theme.Loading.Render("⟳  "+i18n.T("loading")) + "\n"
 	case screenUpdate:
 		body = "\n  " + fmt.Sprintf("ꕤ %s: %s  (%s: %s)\n\n",
-			t("update_available"), styleUpdate.Render(m.latestVer),
-			t("update_current"), styleError.Render(Version)) +
-			"  " + styleVersion.Render(t("update_prompt")) + "\n"
+			i18n.T("update_available"), theme.Update.Render(m.latestVer),
+			i18n.T("update_current"), theme.Error.Render(version.Version)) +
+			"  " + theme.VersionText.Render(i18n.T("update_prompt")) + "\n"
 	}
 
 	footer := ""
 	if m.screen == screenFiles && hasDirItems(m.fileList.Items()) {
-		footer = renderFooter(t(footerKeyDirs)) + "\n"
+		footer = theme.RenderFooter(i18n.T(footerKeyDirs)) + "\n"
 	} else if key, ok := footerKey[m.screen]; ok {
-		footer = renderFooter(t(key)) + "\n"
+		footer = theme.RenderFooter(i18n.T(key)) + "\n"
 	}
 
 	flash := "\n"
 	if m.flash != "" {
-		style, prefix := styleSuccess, "✓  "
+		style, prefix := theme.Success, "✓  "
 		if m.flashErr {
-			style, prefix = styleError, "✗  "
+			style, prefix = theme.Error, "✗  "
 		}
 		flash = "  " + style.Render(prefix+m.flash) + "\n"
 	}
@@ -84,9 +88,9 @@ func (m model) View() string {
 	}
 
 	s := header + "\n" +
-		styleDivider.Render(strings.Repeat("─", m.width)) + "\n" +
+		theme.Divider.Render(strings.Repeat("─", m.width)) + "\n" +
 		body + footer +
-		styleDivider.Render(strings.Repeat("─", m.width)) + "\n" +
+		theme.Divider.Render(strings.Repeat("─", m.width)) + "\n" +
 		flash + debugSection
 	lines := strings.Count(s, "\n")
 	if rem := m.height - lines; rem > 0 {

@@ -3,6 +3,11 @@
 // © 2026 ~ AGL ~ github.com/aglairdev
 // licença: MIT
 //
+// uso:   ./goflix
+//        ./goflix -d     //debug
+//        ./goflix -v     //versão
+//        ./goflix -h     //ajuda
+//
 
 package main
 
@@ -14,12 +19,11 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-)
 
-const (
-	AppName = "goflix"
-	Version = "v1.1.5"
-	RepoAPI = "https://api.github.com/repos/aglairdev/goflix/releases/latest"
+	"github.com/aglairdev/goflix/internal/config"
+	"github.com/aglairdev/goflix/internal/debug"
+	"github.com/aglairdev/goflix/internal/ui"
+	"github.com/aglairdev/goflix/internal/version"
 )
 
 // Dependências
@@ -42,10 +46,10 @@ func main() {
 	for _, arg := range os.Args[1:] {
 		switch arg {
 		case "-v":
-			fmt.Printf("%s %s\n", AppName, Version)
+			fmt.Printf("%s %s\n", version.AppName, version.Version)
 			os.Exit(0)
 		case "-d":
-			debugMode = true
+			debug.Enabled = true
 		case "-h":
 			fmt.Fprintf(os.Stderr, "Usage: %s [flags]\n", os.Args[0])
 			fmt.Fprintf(os.Stderr, "\nFlags:\n")
@@ -65,29 +69,17 @@ func main() {
 
 	checkDeps()
 
-	if debugMode {
-		var err error
-		logPath := filepath.Join(cfgDir, "debug.log")
-		logFile, err = os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			logFile = nil
-		}
-		now := time.Now().Format("2006-01-02 15:04:05")
-		fmt.Fprintf(logFile, "--\n%s (início)\n", now)
-		debug("modo debug iniciado ~ log: %s", logPath)
+	if debug.Enabled {
+		logPath := filepath.Join(config.CfgDir, "debug.log")
+		debug.Init(logPath)
+		debug.Log("modo debug iniciado ~ log: %s", logPath)
 	}
 
-	p := tea.NewProgram(initialModel(), tea.WithAltScreen())
+	p := tea.NewProgram(ui.New(), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
-		if logFile != nil {
-			logFile.Close()
-		}
+		debug.Close()
 		fmt.Fprintln(os.Stderr, "erro:", err)
 		os.Exit(1)
 	}
-	if logFile != nil {
-		now := time.Now().Format("2006-01-02 15:04:05")
-		fmt.Fprintf(logFile, "%s (fim)\n--\n", now)
-		logFile.Close()
-	}
+	debug.Close()
 }

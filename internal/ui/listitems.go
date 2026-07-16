@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"fmt"
@@ -7,6 +7,10 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/lipgloss"
+
+	"github.com/aglairdev/goflix/internal/i18n"
+	"github.com/aglairdev/goflix/internal/theme"
+	"github.com/aglairdev/goflix/internal/video"
 )
 
 func hasDirItems(items []list.Item) bool {
@@ -25,35 +29,35 @@ func hasDirItems(items []list.Item) bool {
 
 type dirItem struct{ path string }
 
-func (d dirItem) Title() string       { return styleDir.Render("› ") + filepath.Base(d.path) + "/" }
+func (d dirItem) Title() string       { return theme.Dir.Render("› ") + filepath.Base(d.path) + "/" }
 func (d dirItem) Description() string { return "" }
 func (d dirItem) FilterValue() string { return filepath.Base(d.path) }
 
 type videoItem struct {
-	file    videoFile
+	file    video.File
 	section string // "progress" | "normal" | "watched" | "sep"
 }
 
-func (v videoItem) FilterValue() string { return v.file.name }
+func (v videoItem) FilterValue() string { return v.file.Name }
 func (v videoItem) Description() string { return "" }
 
 func (v videoItem) Title() string {
 	if v.section == "sep" {
-		return styleDivider.Render(strings.Repeat("─", 64))
+		return theme.Divider.Render(strings.Repeat("─", 64))
 	}
-	name := strings.TrimSuffix(v.file.name, filepath.Ext(v.file.name))
-	dur, pos := formatTime(v.file.duration), formatTime(v.file.resume)
+	name := strings.TrimSuffix(v.file.Name, filepath.Ext(v.file.Name))
+	dur, pos := video.FormatTime(v.file.Duration), video.FormatTime(v.file.Resume)
 	switch v.section {
 	case "progress":
-		return styleNormal.Render(name) +
-			styleMeta.Render(fmt.Sprintf("  %s %s %s  ", pos, t("progress"), dur)) +
-			styleProgress.Render("▶ "+t("continue"))
+		return theme.Normal.Render(name) +
+			theme.Meta.Render(fmt.Sprintf("  %s %s %s  ", pos, i18n.T("progress"), dur)) +
+			theme.Progress.Render("▶ "+i18n.T("continue"))
 	case "watched":
-		return styleWatched.Render(name) +
-			styleMeta.Render(fmt.Sprintf("  %s  ", dur)) +
-			styleWatched.Render("✓ "+t("watched_label"))
+		return theme.Watched.Render(name) +
+			theme.Meta.Render(fmt.Sprintf("  %s  ", dur)) +
+			theme.Watched.Render("✓ "+i18n.T("watched_label"))
 	default:
-		return styleNormal.Render(name) + styleMeta.Render(fmt.Sprintf("  %s", dur))
+		return theme.Normal.Render(name) + theme.Meta.Render(fmt.Sprintf("  %s", dur))
 	}
 }
 
@@ -67,7 +71,7 @@ func newDelegate() compactDelegate {
 	d.SetSpacing(0)
 	d.Styles.SelectedTitle = d.Styles.SelectedTitle.
 		Border(lipgloss.NormalBorder(), false, false, false, true).
-		BorderForeground(lipgloss.Color(currentAccent)).
+		BorderForeground(lipgloss.Color(theme.CurrentAccent)).
 		Foreground(lipgloss.Color("#FFFFFF")).
 		Bold(true).
 		Padding(0, 0, 0, 1)

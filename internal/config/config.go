@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -8,15 +8,19 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/aglairdev/goflix/internal/debug"
+	"github.com/aglairdev/goflix/internal/i18n"
+	"github.com/aglairdev/goflix/internal/theme"
 )
 
 // Config
 
 var (
-	cfgDir       = initCfgDir()
-	cfgFile      = filepath.Join(cfgDir, "config")
-	watchedPath  = filepath.Join(cfgDir, "watched")
-	settingsPath = filepath.Join(cfgDir, "settings")
+	CfgDir       = initCfgDir()
+	cfgFile      = filepath.Join(CfgDir, "config")
+	watchedPath  = filepath.Join(CfgDir, "watched")
+	settingsPath = filepath.Join(CfgDir, "settings")
 )
 
 func initCfgDir() string {
@@ -27,20 +31,20 @@ func initCfgDir() string {
 	return filepath.Join(home, ".config", "goflix")
 }
 
-func ensureConfig() {
-	os.MkdirAll(cfgDir, 0755)
+func EnsureConfig() {
+	os.MkdirAll(CfgDir, 0755)
 	for _, f := range []string{cfgFile, watchedPath, settingsPath} {
 		if _, err := os.Stat(f); os.IsNotExist(err) {
 			os.WriteFile(f, nil, 0644)
 		}
 	}
-	debug("config dir: %s", cfgDir)
+	debug.Log("config dir: %s", CfgDir)
 }
 
 func loadLines(path string) []string {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		debugErr("falha ao ler %s: %v", path, err)
+		debug.LogErr("falha ao ler %s: %v", path, err)
 		return nil
 	}
 	var lines []string
@@ -55,31 +59,35 @@ func loadLines(path string) []string {
 func saveLines(path string, lines []string) error {
 	err := os.WriteFile(path, []byte(strings.Join(lines, "\n")+"\n"), 0644)
 	if err != nil {
-		debugErr("falha ao salvar %s: %v", path, err)
+		debug.LogErr("falha ao salvar %s: %v", path, err)
 	}
 	return err
 }
 
-func addDir(path string) error {
+func ListDirs() []string {
+	return loadLines(cfgFile)
+}
+
+func AddDir(path string) error {
 	path = strings.TrimRight(path, "/")
 	abs, err := filepath.Abs(path)
 	if err != nil {
-		return fmt.Errorf("%s", t("dir_invalid"))
+		return fmt.Errorf("%s", i18n.T("dir_invalid"))
 	}
 	info, err := os.Stat(abs)
 	if err != nil || !info.IsDir() {
-		return fmt.Errorf("%s", t("dir_invalid"))
+		return fmt.Errorf("%s", i18n.T("dir_invalid"))
 	}
 	dirs := loadLines(cfgFile)
 	for _, d := range dirs {
 		if d == abs {
-			return fmt.Errorf("%s", t("dir_exists"))
+			return fmt.Errorf("%s", i18n.T("dir_exists"))
 		}
 	}
 	return saveLines(cfgFile, append(dirs, abs))
 }
 
-func removeDir(path string) {
+func RemoveDir(path string) {
 	var nd []string
 	for _, d := range loadLines(cfgFile) {
 		if d != path {
@@ -87,54 +95,54 @@ func removeDir(path string) {
 		}
 	}
 	saveLines(cfgFile, nd)
-	debug("diretório removido: %s", path)
+	debug.Log("diretório removido: %s", path)
 }
 
-func loadTheme() {
+func LoadTheme() {
 	data, err := os.ReadFile(settingsPath)
 	if err != nil {
-		debugErr("settings não encontrado, usando padrão: %v", err)
-		currentTheme = 0
-		applyTheme(themes[0].accent)
+		debug.LogErr("settings não encontrado, usando padrão: %v", err)
+		theme.Current = 0
+		theme.Apply(theme.Themes[0].Accent)
 		return
 	}
 	for _, l := range strings.Split(string(data), "\n") {
 		if parts := strings.SplitN(l, "=", 2); len(parts) == 2 && parts[0] == "theme" {
-			for i, t := range themes {
-				if t.name == parts[1] {
-					currentTheme = i
-					applyTheme(t.accent)
+			for i, th := range theme.Themes {
+				if th.Name == parts[1] {
+					theme.Current = i
+					theme.Apply(th.Accent)
 					return
 				}
 			}
 		}
 	}
-	debug("settings corrompido, usando tema padrão")
-	currentTheme = 0
-	applyTheme(themes[0].accent)
+	debug.Log("settings corrompido, usando tema padrão")
+	theme.Current = 0
+	theme.Apply(theme.Themes[0].Accent)
 }
 
-func saveTheme() {
-	os.WriteFile(settingsPath, []byte("theme="+themes[currentTheme].name+"\n"), 0644)
-	debug("tema salvo: %s", themes[currentTheme].name)
+func SaveTheme() {
+	os.WriteFile(settingsPath, []byte("theme="+theme.Themes[theme.Current].Name+"\n"), 0644)
+	debug.Log("tema salvo: %s", theme.Themes[theme.Current].Name)
 }
 
 // Assistidos
 
-func loadWatched() map[string]int64 {
+func LoadWatched() map[string]int64 {
 	w := map[string]int64{}
 	for _, l := range loadLines(watchedPath) {
 		if parts := strings.SplitN(l, "=", 2); len(parts) == 2 {
 			ts, _ := strconv.ParseInt(parts[1], 10, 64)
 			w[parts[0]] = ts
 		} else {
-			debugErr("linha ignorada (formato inválido): %s", l)
+			debug.LogErr("linha ignorada (formato inválido): %s", l)
 		}
 	}
 	return w
 }
 
-func saveWatched(w map[string]int64) {
+func SaveWatched(w map[string]int64) {
 	lines := make([]string, 0, len(w))
 	for k, v := range w {
 		lines = append(lines, fmt.Sprintf("%s=%d", k, v))
@@ -143,12 +151,12 @@ func saveWatched(w map[string]int64) {
 	os.WriteFile(watchedPath, []byte(strings.Join(lines, "\n")+"\n"), 0644)
 }
 
-func setWatched(path string, add bool) {
-	w := loadWatched()
+func SetWatched(path string, add bool) {
+	w := LoadWatched()
 	if add {
 		w[path] = time.Now().Unix()
 	} else {
 		delete(w, path)
 	}
-	saveWatched(w)
+	SaveWatched(w)
 }

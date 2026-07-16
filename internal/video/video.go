@@ -1,4 +1,4 @@
-package main
+package video
 
 import (
 	"crypto/md5"
@@ -11,19 +11,20 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/aglairdev/goflix/internal/debug"
+	"github.com/aglairdev/goflix/internal/i18n"
 )
 
 // Extensões de vídeo suportadas
 
-var videoExts = map[string]bool{
+var exts = map[string]bool{
 	".mp4": true, ".mkv": true, ".avi": true, ".mov": true,
 	".wmv": true, ".flv": true, ".webm": true, ".m4v": true,
 	".ts": true, ".mpeg": true, ".mpg": true, ".3gp": true,
 }
 
-// MPV
-
-func mpvWatchDir() string {
+func MpvWatchDir() string {
 	if xdg := os.Getenv("XDG_STATE_HOME"); xdg != "" {
 		return filepath.Join(xdg, "mpv", "watch_later")
 	}
@@ -31,12 +32,12 @@ func mpvWatchDir() string {
 	return filepath.Join(home, ".local", "state", "mpv", "watch_later")
 }
 
-func mpvHash(path string) string {
+func MpvHash(path string) string {
 	return strings.ToUpper(fmt.Sprintf("%x", md5.Sum([]byte(path))))
 }
 
-func getResumePosition(path string) float64 {
-	data, err := os.ReadFile(filepath.Join(mpvWatchDir(), mpvHash(path)))
+func GetResumePosition(path string) float64 {
+	data, err := os.ReadFile(filepath.Join(MpvWatchDir(), MpvHash(path)))
 	if err != nil {
 		return 0
 	}
@@ -47,28 +48,28 @@ func getResumePosition(path string) float64 {
 	return 0
 }
 
-func resetResumePosition(path string) {
-	os.Remove(filepath.Join(mpvWatchDir(), mpvHash(path)))
+func ResetResumePosition(path string) {
+	os.Remove(filepath.Join(MpvWatchDir(), MpvHash(path)))
 }
 
 // ffprobe
 
-func getDuration(path string) float64 {
+func GetDuration(path string) float64 {
 	out, err := exec.Command("ffprobe", "-v", "error",
 		"-show_entries", "format=duration",
 		"-of", "default=noprint_wrappers=1:nokey=1",
 		path).Output()
 	if err != nil {
-		debugErr("ffprobe falhou para %s: %v", path, err)
+		debug.LogErr("ffprobe falhou para %s: %v", path, err)
 		return 0
 	}
 	v, _ := strconv.ParseFloat(strings.TrimSpace(string(out)), 64)
 	return v
 }
 
-func formatTime(secs float64) string {
+func FormatTime(secs float64) string {
 	if secs <= 0 {
-		return t("dur_unknown")
+		return i18n.T("dur_unknown")
 	}
 	s := int(math.Round(secs))
 	if h := s / 3600; h > 0 {
@@ -79,34 +80,34 @@ func formatTime(secs float64) string {
 
 // Vídeos
 
-type videoFile struct {
-	path      string
-	name      string
-	duration  float64
-	resume    float64
-	watched   bool
-	watchedAt int64
+type File struct {
+	Path      string
+	Name      string
+	Duration  float64
+	Resume    float64
+	Watched   bool
+	WatchedAt int64
 }
 
-func loadVideos(dir string, watched map[string]int64) []videoFile {
+func Load(dir string, watched map[string]int64) []File {
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		debugErr("falha ao ler diretório %s: %v", dir, err)
+		debug.LogErr("falha ao ler diretório %s: %v", dir, err)
 		return nil
 	}
-	var files []videoFile
+	var files []File
 	for _, e := range entries {
-		if e.IsDir() || !videoExts[strings.ToLower(filepath.Ext(e.Name()))] {
+		if e.IsDir() || !exts[strings.ToLower(filepath.Ext(e.Name()))] {
 			continue
 		}
 		path := filepath.Join(dir, e.Name())
 		ts, isWatched := watched[path]
-		files = append(files, videoFile{
-			path: path, name: e.Name(),
-			duration: getDuration(path), resume: getResumePosition(path),
-			watched: isWatched, watchedAt: ts,
+		files = append(files, File{
+			Path: path, Name: e.Name(),
+			Duration: GetDuration(path), Resume: GetResumePosition(path),
+			Watched: isWatched, WatchedAt: ts,
 		})
 	}
-	sort.Slice(files, func(i, j int) bool { return files[i].name < files[j].name })
+	sort.Slice(files, func(i, j int) bool { return files[i].Name < files[j].Name })
 	return files
 }

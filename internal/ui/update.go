@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"os"
@@ -8,16 +8,20 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/aglairdev/goflix/internal/config"
+	"github.com/aglairdev/goflix/internal/debug"
+	"github.com/aglairdev/goflix/internal/i18n"
+	"github.com/aglairdev/goflix/internal/selfupdate"
+	"github.com/aglairdev/goflix/internal/theme"
+	"github.com/aglairdev/goflix/internal/video"
 )
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if m.screen != screenLoading {
-		mu.Lock()
-		if len(pendingDebug) > 0 {
-			m.debugFlash = strings.Join(pendingDebug, "\n")
-			pendingDebug = nil
+		if pending := debug.Drain(); len(pending) > 0 {
+			m.debugFlash = strings.Join(pending, "\n")
 		}
-		mu.Unlock()
 	}
 
 	switch msg := msg.(type) {
@@ -32,13 +36,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.fileList.SetSize(msg.Width, h)
 		return m, nil
 
-	case updateCheckMsg:
-		m.latestVer = msg.latest
-		if msg.latest != "" {
+	case selfupdate.CheckMsg:
+		m.latestVer = msg.Latest
+		if msg.Latest != "" {
 			m.screen = screenUpdate
 		} else {
 			m.screen = screenMain
 		}
+		return m, nil
+
+	case selfupdate.ResultMsg:
+		m.flash, m.flashErr = msg.Text, msg.Err
 		return m, nil
 
 	case loadDirMsg:
@@ -63,7 +71,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if m.screen == screenUpdate {
 			if msg.String() == "u" {
-				return m, doUpdate()
+				return m, selfupdate.Update()
 			}
 			m.screen = screenMain
 			return m, nil
@@ -90,7 +98,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) updateMain(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m Model) updateMain(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "q", "ctrl+c":
 		m.quitting = true
@@ -102,25 +110,25 @@ func (m model) updateMain(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, tea.Batch(tea.ClearScreen, textinput.Blink)
 	case "d":
 		if item, ok := m.mainList.SelectedItem().(dirItem); ok {
-			removeDir(item.path)
+			config.RemoveDir(item.path)
 			m.reloadDirs()
 			n := len(m.mainList.Items())
 			if n > 0 && m.mainList.Index() >= n {
 				m.mainList.Select(n - 1)
 			}
-			m.flash = t("dir_removed") + ": " + filepath.Base(item.path)
+			m.flash = i18n.T("dir_removed") + ": " + filepath.Base(item.path)
 		}
 		return m, nil
 	case "l":
-		toggleLang()
-		m.flash = t("lang_changed") + " " + langLabel[currentLang]
+		i18n.Toggle()
+		m.flash = i18n.T("lang_changed") + " " + i18n.Label[i18n.Current]
 		m.reloadDirs()
 		return m, nil
 	case "t":
-		currentTheme = (currentTheme + 1) % len(themes)
-		applyTheme(themes[currentTheme].accent)
-		saveTheme()
-		m.flash = "Tema: " + themes[currentTheme].name
+		theme.Current = (theme.Current + 1) % len(theme.Themes)
+		theme.Apply(theme.Themes[theme.Current].Accent)
+		config.SaveTheme()
+		m.flash = "Tema: " + theme.Themes[theme.Current].Name
 		m.reloadDirs()
 		if m.screen == screenFiles && m.curDir != "" {
 			m.loadDir(m.curDir)
@@ -139,9 +147,7 @@ func (m model) updateMain(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) updateFiles(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-
-	// v e r só funcionam quando há vídeos na lista (não em listagem de diretórios)
+func (m Model) updateFiles(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	isVideoList := !hasDirItems(m.fileList.Items())
 
@@ -150,10 +156,10 @@ func (m model) updateFiles(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.quitting = true
 		return m, tea.Quit
 	case "t":
-		currentTheme = (currentTheme + 1) % len(themes)
-		applyTheme(themes[currentTheme].accent)
-		saveTheme()
-		m.flash = "Tema: " + themes[currentTheme].name
+		theme.Current = (theme.Current + 1) % len(theme.Themes)
+		theme.Apply(theme.Themes[theme.Current].Accent)
+		config.SaveTheme()
+		m.flash = "Tema: " + theme.Themes[theme.Current].Name
 		m.loadDir(m.curDir)
 		return m, nil
 	case "esc":
@@ -171,9 +177,9 @@ func (m model) updateFiles(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		if vi, ok := m.fileList.SelectedItem().(videoItem); ok && vi.section != "sep" {
-			setWatched(vi.file.path, true)
-			m.watched[vi.file.path] = time.Now().Unix()
-			m.flash = t("marked_watched") + ": " + strings.TrimSuffix(vi.file.name, filepath.Ext(vi.file.name))
+			config.SetWatched(vi.file.Path, true)
+			m.watched[vi.file.Path] = time.Now().Unix()
+			m.flash = i18n.T("marked_watched") + ": " + strings.TrimSuffix(vi.file.Name, filepath.Ext(vi.file.Name))
 			m.loadDir(m.curDir)
 		}
 		return m, nil
@@ -182,10 +188,10 @@ func (m model) updateFiles(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		if vi, ok := m.fileList.SelectedItem().(videoItem); ok && vi.section != "sep" {
-			setWatched(vi.file.path, false)
-			resetResumePosition(vi.file.path)
-			delete(m.watched, vi.file.path)
-			m.flash = t("unmarked_watched") + ": " + strings.TrimSuffix(vi.file.name, filepath.Ext(vi.file.name))
+			config.SetWatched(vi.file.Path, false)
+			video.ResetResumePosition(vi.file.Path)
+			delete(m.watched, vi.file.Path)
+			m.flash = i18n.T("unmarked_watched") + ": " + strings.TrimSuffix(vi.file.Name, filepath.Ext(vi.file.Name))
 			m.loadDir(m.curDir)
 		}
 		return m, nil
@@ -194,7 +200,7 @@ func (m model) updateFiles(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		if di, ok := m.fileList.SelectedItem().(dirItem); ok {
 			target = di.path
 		} else if vi, ok := m.fileList.SelectedItem().(videoItem); ok && vi.section != "sep" {
-			target = vi.file.path
+			target = vi.file.Path
 		}
 		if target != "" {
 			m.renameTarget = target
@@ -212,7 +218,7 @@ func (m model) updateFiles(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, func() tea.Msg { return loadDirMsg{dir: di.path} }
 		}
 		if vi, ok := m.fileList.SelectedItem().(videoItem); ok && vi.section != "sep" {
-			return m, m.playFile(vi.file.path)
+			return m, m.playFile(vi.file.Path)
 		}
 	}
 	var cmd tea.Cmd
@@ -220,7 +226,7 @@ func (m model) updateFiles(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) updateInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m Model) updateInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "esc":
 		m.screen = screenMain
@@ -232,10 +238,10 @@ func (m model) updateInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			home, _ := os.UserHomeDir()
 			path = filepath.Join(home, path[2:])
 		}
-		if err := addDir(path); err != nil {
+		if err := config.AddDir(path); err != nil {
 			m.flash, m.flashErr = err.Error(), true
 		} else {
-			m.flash, m.flashErr = t("dir_added")+": "+filepath.Base(path), false
+			m.flash, m.flashErr = i18n.T("dir_added")+": "+filepath.Base(path), false
 			m.screen = screenMain
 			m.reloadDirs()
 		}
@@ -247,7 +253,7 @@ func (m model) updateInput(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) updateRename(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+func (m Model) updateRename(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "esc":
 		m.screen = screenFiles
@@ -261,17 +267,17 @@ func (m model) updateRename(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		newPath := filepath.Join(filepath.Dir(m.renameTarget), newName)
 		var fmsg flashMsg
 		if err := os.Rename(m.renameTarget, newPath); err != nil {
-			debugErr("rename falhou: %v", err)
+			debug.LogErr("rename falhou: %v", err)
 			fmsg = flashMsg{text: err.Error(), err: true}
 		} else {
-			oldHL := filepath.Join(mpvWatchDir(), mpvHash(m.renameTarget))
+			oldHL := filepath.Join(video.MpvWatchDir(), video.MpvHash(m.renameTarget))
 			if _, err := os.Stat(oldHL); err == nil {
-				debugErr(`histórico perdido: "%s" (watch_later existia)`, filepath.Base(m.renameTarget))
+				debug.LogErr(`histórico perdido: "%s" (watch_later existia)`, filepath.Base(m.renameTarget))
 				os.Remove(oldHL)
 			} else {
-				debug("arquivo renomeado: %s → %s", filepath.Base(m.renameTarget), newName)
+				debug.Log("arquivo renomeado: %s → %s", filepath.Base(m.renameTarget), newName)
 			}
-			fmsg = flashMsg{text: t("renamed") + ": " + newName, err: false}
+			fmsg = flashMsg{text: i18n.T("renamed") + ": " + newName, err: false}
 		}
 		m.renameTarget = ""
 		m.screen = screenFiles
