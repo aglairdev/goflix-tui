@@ -4,6 +4,6 @@ package version
 
 const (
 	AppName = "goflix"
-	Version = "v1.1.7"
+	Version = "v1.1.8"
 	RepoAPI = "https://api.github.com/repos/aglairdev/goflix/releases/latest"
 )
