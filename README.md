@@ -1,47 +1,63 @@
 <div align="center">
 
-[![GOFLIX](https://img.shields.io/badge/GOFLIX-C55A10?style=for-the-badge)](https://github.com/aglairdev/Goflix)
+<a href="https://github.com/aglairdev/goflix-tui">
+  <img width="500" height="100" alt="logotipo goflix-tui"
+       src="https://github.com/user-attachments/assets/27228029-abff-4d4b-bdb5-6db7350f7245" />
+</a>
+
+<hr>
+
+[![Release](https://img.shields.io/github/v/release/aglairdev/goflix-tui?style=for-the-badge&color=fb4934&label=release)](https://github.com/aglairdev/goflix-tui/releases)
+![OS](https://img.shields.io/badge/OS-Linux-fb4934?style=for-the-badge&logo=linux&logoColor=white)
+[![License](https://img.shields.io/github/license/aglairdev/goflix-tui?style=for-the-badge&color=fb4934)](LICENSE)
+![Go](https://img.shields.io/badge/%3C%2F%3E-Go-fb4934?style=for-the-badge)
+
+Gerenciador de mpv TUI.
 
 </div>
 
-## Que isso?
-
-Gerenciador de vídeos no terminal.
-
-![Go](https://img.shields.io/badge/Go-333333?style=flat-square&logo=go&logoColor=white)
-
 <div align="center">
 
-| Goflix |
+| Demo |
 |:------:|
-| <img src="https://github.com/user-attachments/assets/47f7fb85-d3f4-4d7b-8b25-7f27dc94f5f6" alt="Goflix Demo" width="600"> |
+| <img src="https://github.com/user-attachments/assets/47f7fb85-d3f4-4d7b-8b25-7f27dc94f5f6" alt="goflix-tui demo" width="600"> |
 
 </div>
 
 ## Instalação
 
 **Go (recomendado):**
+
 ```bash
 go install github.com/aglairdev/goflix@latest
 ```
 
 Requer: `go` `mpv` 
 
-**Via release** (sem Go instalado):
-Baixe o binário em [releases](https://github.com/aglairdev/goflix/releases).
+**Via release**:
+
+Baixe o binário em [releases](https://github.com/aglairdev/goflix-tui/releases).
 
 Requer: `mpv` 
 
-mova para `~/.local/bin` e dê permissão de execução:
+Dê permissão de execução e mova para `~/.local/bin` 
 
 ```bash
 cd ~/go/bin/
+sudo chmod +x goflix
 mv goflix ~/.local/bin/
 ```
+
 Certifique-se de que `~/.local/bin` está no seu PATH. Se não estiver, adicione ao seu `~/.bashrc` ou `~/.zshrc`:
 
 ```bash
 export PATH="$HOME/.local/bin:$PATH"
+```
+
+Ou fish (`~/.config/fish/config.fish`):
+
+```bash
+set -Ux PATH $HOME/.local/bin $PATH
 ```
 
 > [!NOTE]
@@ -98,9 +114,9 @@ u: atualizar agora    qualquer tecla: ignorar
 Pressione `u` para atualizar automaticamente. Requer Go instalado.
 
 > [!NOTE]
-> Atualizações automáticas funcionam a partir da versão [1.1.5](https://github.com/aglairdev/Goflix/compare/v1.1.4...v1.1.5)
+> Atualizações automáticas funcionam a partir da versão [1.1.5](https://github.com/aglairdev/goflix-tui/compare/v1.1.4...v1.1.5)
 
-Usuários que instalaram via release receberão o aviso, mas precisarão baixar o novo binário manualmente em [releases](https://github.com/aglairdev/goflix/releases).
+Usuários que instalaram via release receberão o aviso, mas precisarão baixar o novo binário manualmente em [releases](https://github.com/aglairdev/goflix-tui/releases).
 
 ## Dados
 
@@ -152,8 +168,5 @@ rm ~/go/bin/goflix
 rm -r ~/.config/goflix #histórico de assistidos, diretórios mapeados
 rm ~/.local/bin/goflix
 ```
-
-## Licença
-[MIT](https://github.com/aglairdev/Goflix/blob/main/LICENSE)
 
 <p align="center">ꕤ AGL</p>
