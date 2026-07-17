@@ -2,7 +2,7 @@
 
 <a href="https://github.com/aglairdev/goflix-tui">
   <img width="500" height="100" alt="logotipo goflix-tui"
-       src="https://github.com/user-attachments/assets/c3908411-516b-402b-94d8-5e5032fe1241" />
+       src="https://github.com/user-attachments/assets/27228029-abff-4d4b-bdb5-6db7350f7245" />
 </a>
 
 <hr>
