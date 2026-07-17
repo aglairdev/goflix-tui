@@ -40,24 +40,23 @@ Baixe o binário em [releases](https://github.com/aglairdev/goflix-tui/releases)
 
 Requer: `mpv` 
 
-Dê permissão de execução e mova para `~/.local/bin` 
+Mova para `~/go/bin` e dê permissão de execução:
 
 ```bash
 cd ~/go/bin/
 sudo chmod +x goflix
-mv goflix ~/.local/bin/
 ```
 
-Certifique-se de que `~/.local/bin` está no seu PATH. Se não estiver, adicione ao seu `~/.bashrc` ou `~/.zshrc`:
+Certifique-se de que `~/go/bin` está no seu PATH. Se não estiver, adicione ao seu `~/.bashrc` ou `~/.zshrc`:
 
 ```bash
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/go/bin:$PATH"
 ```
 
 Ou fish (`~/.config/fish/config.fish`):
 
 ```bash
-set -Ux PATH $HOME/.local/bin $PATH
+set -Ux PATH $HOME/go/bin $PATH
 ```
 
 > [!NOTE]
@@ -166,7 +165,6 @@ go build -o goflix .
 ```bash
 rm ~/go/bin/goflix
 rm -r ~/.config/goflix #histórico de assistidos, diretórios mapeados
-rm ~/.local/bin/goflix
 ```
 
 <p align="center">ꕤ AGL</p>
