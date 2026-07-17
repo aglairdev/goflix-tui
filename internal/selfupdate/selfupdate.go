@@ -2,9 +2,12 @@ package selfupdate
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -48,6 +51,24 @@ func Check() tea.Msg {
 	return CheckMsg{}
 }
 
+func goBinPath() (string, error) {
+	gobin, err := exec.Command("go", "env", "GOBIN").Output()
+	if err == nil {
+		if dir := strings.TrimSpace(string(gobin)); dir != "" {
+			return filepath.Join(dir, "goflix"), nil
+		}
+	}
+	gopath, err := exec.Command("go", "env", "GOPATH").Output()
+	if err != nil {
+		return "", err
+	}
+	dir := strings.TrimSpace(string(gopath))
+	if dir == "" {
+		return "", fmt.Errorf("GOPATH vazio")
+	}
+	return filepath.Join(dir, "bin", "goflix"), nil
+}
+
 func Update() tea.Cmd {
 	return func() tea.Msg {
 		cmd := exec.Command("go", "install", "github.com/aglairdev/goflix@latest")
@@ -56,21 +77,14 @@ func Update() tea.Cmd {
 			debug.LogErr("go install falhou: %v", err)
 			return ResultMsg{Text: i18n.T("update_error"), Err: true}
 		}
-		bin, err := os.Executable()
+		bin, err := goBinPath()
 		if err != nil {
-			debug.LogErr("não foi possível localizar o binário atual: %v", err)
+			debug.LogErr("não foi possível determinar destino do go install: %v", err)
 			return ResultMsg{Text: i18n.T("update_error"), Err: true}
 		}
-		newBin, err := exec.LookPath("goflix")
-		if err != nil {
-			debug.LogErr("binário novo não encontrado no PATH: %v", err)
+		if _, err := os.Stat(bin); err != nil {
+			debug.LogErr("binário atualizado não encontrado em %s: %v", bin, err)
 			return ResultMsg{Text: i18n.T("update_error"), Err: true}
-		}
-		if newBin != bin {
-			if err := replaceBinary(newBin, bin); err != nil {
-				debug.LogErr("falha ao mover binário atualizado para %s: %v", bin, err)
-				return ResultMsg{Text: i18n.T("update_error"), Err: true}
-			}
 		}
 		if err := exec.Command(bin, os.Args[1:]...).Start(); err != nil {
 			debug.LogErr("falha ao reiniciar goflix atualizado: %v", err)
@@ -78,24 +92,4 @@ func Update() tea.Cmd {
 		}
 		return tea.QuitMsg{}
 	}
-}
-
-func replaceBinary(newBin, bin string) error {
-	if err := os.Rename(newBin, bin); err == nil {
-		return nil
-	}
-	data, err := os.ReadFile(newBin)
-	if err != nil {
-		return err
-	}
-	tmp := bin + ".new"
-	if err := os.WriteFile(tmp, data, 0755); err != nil {
-		return err
-	}
-	if err := os.Rename(tmp, bin); err != nil {
-		os.Remove(tmp)
-		return err
-	}
-	os.Remove(newBin)
-	return nil
 }
