@@ -8,3 +8,5 @@ changelog:
       labels: ["refactor"]
     - title: "Documentação"
       labels: ["documentation"]
+    - title: "Dependências"
+      labels: ["dependencies"]
