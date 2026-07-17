@@ -114,7 +114,7 @@ u: atualizar agora    qualquer tecla: ignorar
 Pressione `u` para atualizar automaticamente. Requer Go instalado.
 
 > [!NOTE]
-> Atualizações automáticas funcionam a partir da versão [1.1.5](https://github.com/aglairdev/goflix-tui/compare/v1.1.4...v1.1.5)
+> Atualizações automáticas funcionam a partir da versão [1.1.7](https://github.com/aglairdev/goflix-tui/compare/v1.1.6...v1.1.7)
 
 Usuários que instalaram via release receberão o aviso, mas precisarão baixar o novo binário manualmente em [releases](https://github.com/aglairdev/goflix-tui/releases).
 
