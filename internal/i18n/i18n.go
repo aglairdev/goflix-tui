@@ -1,5 +1,5 @@
-package main
-
+package i18n
+//
 // i18n.go: traduções do goflix
 //
 // Para adicionar um novo idioma:
@@ -10,8 +10,9 @@ package main
 //
 // Alternância de idioma: tecla  l  na tela inicial do app
 // Idioma padrão: ptbr
+//
 
-var langs = map[string]map[string]string{
+var Langs = map[string]map[string]string{
 	"ptbr": {
 		// Tela inicial
 		"no_dirs":  "Nenhum diretório mapeado ainda.",
@@ -103,30 +104,30 @@ var langs = map[string]map[string]string{
 	},
 }
 
-var currentLang = "ptbr"
+var Current = "ptbr"
 
-// langLabel retorna o nome legível do idioma atual para exibição no flash
-var langLabel = map[string]string{
+// Label retorna o nome legível do idioma atual para exibição no flash
+var Label = map[string]string{
 	"ptbr": "Português",
 	"es":   "Español",
 }
 
-// t retorna a string traduzida para o idioma atual
+// T retorna a string traduzida para o idioma atual
 // Faz fallback para ptbr se a chave não existir no idioma escolhido
-func t(key string) string {
-	if v, ok := langs[currentLang][key]; ok {
+func T(key string) string {
+	if v, ok := Langs[Current][key]; ok {
 		return v
 	}
-	if v, ok := langs["ptbr"][key]; ok {
+	if v, ok := Langs["ptbr"][key]; ok {
 		return v
 	}
 	return "[" + key + "]"
 }
 
-// toggleLang alterna entre os idiomas disponíveis em ordem alfabética
-func toggleLang() {
-	keys := make([]string, 0, len(langs))
-	for k := range langs {
+// Toggle alterna entre os idiomas disponíveis em ordem alfabética
+func Toggle() {
+	keys := make([]string, 0, len(Langs))
+	for k := range Langs {
 		keys = append(keys, k)
 	}
 	for i := 0; i < len(keys)-1; i++ {
@@ -137,8 +138,8 @@ func toggleLang() {
 		}
 	}
 	for i, k := range keys {
-		if k == currentLang {
-			currentLang = keys[(i+1)%len(keys)]
+		if k == Current {
+			Current = keys[(i+1)%len(keys)]
 			return
 		}
 	}
