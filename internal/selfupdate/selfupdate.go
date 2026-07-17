@@ -56,12 +56,46 @@ func Update() tea.Cmd {
 			debug.LogErr("go install falhou: %v", err)
 			return ResultMsg{Text: i18n.T("update_error"), Err: true}
 		}
-		bin, _ := os.Executable()
-		if newBin, err := exec.LookPath("goflix"); err == nil && newBin != bin {
-			os.Remove(bin)
-			os.Rename(newBin, bin)
+		bin, err := os.Executable()
+		if err != nil {
+			debug.LogErr("não foi possível localizar o binário atual: %v", err)
+			return ResultMsg{Text: i18n.T("update_error"), Err: true}
 		}
-		exec.Command(bin, os.Args[1:]...).Start()
+		newBin, err := exec.LookPath("goflix")
+		if err != nil {
+			debug.LogErr("binário novo não encontrado no PATH: %v", err)
+			return ResultMsg{Text: i18n.T("update_error"), Err: true}
+		}
+		if newBin != bin {
+			if err := replaceBinary(newBin, bin); err != nil {
+				debug.LogErr("falha ao mover binário atualizado para %s: %v", bin, err)
+				return ResultMsg{Text: i18n.T("update_error"), Err: true}
+			}
+		}
+		if err := exec.Command(bin, os.Args[1:]...).Start(); err != nil {
+			debug.LogErr("falha ao reiniciar goflix atualizado: %v", err)
+			return ResultMsg{Text: i18n.T("update_error"), Err: true}
+		}
 		return tea.QuitMsg{}
 	}
+}
+
+func replaceBinary(newBin, bin string) error {
+	if err := os.Rename(newBin, bin); err == nil {
+		return nil
+	}
+	data, err := os.ReadFile(newBin)
+	if err != nil {
+		return err
+	}
+	tmp := bin + ".new"
+	if err := os.WriteFile(tmp, data, 0755); err != nil {
+		return err
+	}
+	if err := os.Rename(tmp, bin); err != nil {
+		os.Remove(tmp)
+		return err
+	}
+	os.Remove(newBin)
+	return nil
 }
