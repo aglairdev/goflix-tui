@@ -1,26 +1,13 @@
 <div align="center">
 
-<a href="https://github.com/aglairdev/goflix-tui">
-  <img width="500" height="100" alt="logotipo goflix-tui"
-       src="https://github.com/user-attachments/assets/27228029-abff-4d4b-bdb5-6db7350f7245" />
-</a>
+<video src="https://github.com/user-attachments/assets/a7fd04a3-8afb-440a-8b58-89a30be09e73" controls width="400"></video>
 
-<hr>
-
-[![Release](https://img.shields.io/github/v/release/aglairdev/goflix-tui?style=for-the-badge&color=fb4934&label=release)](https://github.com/aglairdev/goflix-tui/releases)
-![OS](https://img.shields.io/badge/OS-Linux-fb4934?style=for-the-badge&logo=linux&logoColor=white)
-[![License](https://img.shields.io/github/license/aglairdev/goflix-tui?style=for-the-badge&color=fb4934)](LICENSE)
-![Go](https://img.shields.io/badge/%3C%2F%3E-Go-fb4934?style=for-the-badge)
+[![Release](https://img.shields.io/github/v/release/aglairdev/goflix-tui?style=for-the-badge&color=CBA6F7&label=release)](https://github.com/aglairdev/goflix-tui/releases)
+![OS](https://img.shields.io/badge/OS-Linux-CBA6F7?style=for-the-badge&logo=linux&logoColor=white)
+[![License](https://img.shields.io/github/license/aglairdev/goflix-tui?style=for-the-badge&color=CBA6F7)](LICENSE)
+![Go](https://img.shields.io/badge/%3C%2F%3E-Go-CBA6F7?style=for-the-badge)
 
 Gerenciador de mpv TUI.
-
-</div>
-
-<div align="center">
-
-| Demo |
-|:------:|
-| <img src="https://github.com/user-attachments/assets/2c49fedb-a18a-4058-b2d1-9b7bbd343627" alt="goflix-tui demo" width="600"> |
 
 </div>
 
