@@ -20,7 +20,7 @@ Gerenciador de mpv TUI.
 
 | Demo |
 |:------:|
-| <img src="https://github.com/user-attachments/assets/47f7fb85-d3f4-4d7b-8b25-7f27dc94f5f6" alt="goflix-tui demo" width="600"> |
+| <img src="https://github.com/user-attachments/assets/2c49fedb-a18a-4058-b2d1-9b7bbd343627" alt="goflix-tui demo" width="600"> |
 
 </div>
 
